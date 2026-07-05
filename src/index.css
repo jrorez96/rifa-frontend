@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --color-void: #0a0908;
+  --color-card: #171310;
+  --color-card-hi: #201a13;
+  --color-gold-bright: #f4d06f;
+  --color-gold: #c9973f;
+  --color-gold-dim: #6b4e1e;
+  --color-ink: #f0e9db;
+  --color-ink-muted: #a89d87;
+  --color-sold: #2c2925;
+  --color-sold-text: #6e675c;
+  --color-reserved: #4a3a17;
+  --color-reserved-text: #d9a441;
+  --color-available-border: #3d3327;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-void);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201, 151, 63, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(201, 151, 63, 0.06), transparent);
+  color: var(--color-ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+.font-ticket { font-family: 'JetBrains Mono', monospace; }
+
+.text-gold-gradient {
+  background: linear-gradient(180deg, var(--color-gold-bright) 0%, var(--color-gold) 55%, var(--color-gold-dim) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Signature element: cada numero se dibuja como un talon de boleto perforado,
+   con dos muescas circulares a los lados, como si se hubiera arrancado
+   de un rollo de boletos. */
+.ticket-stub { position: relative; }
+.ticket-stub::before,
+.ticket-stub::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  background: var(--color-void);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+.ticket-stub::before { left: -3px; }
+.ticket-stub::after { right: -3px; }
+
+::selection { background: var(--color-gold); color: var(--color-void); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold-bright);
+  outline-offset: 2px;
+}
