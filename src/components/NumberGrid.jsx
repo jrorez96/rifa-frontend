@@ -1,5 +1,5 @@
-import { Grid } from 'react-window';
-import { useEffect, useRef, useState } from 'react';
+import { Grid, useGridRef } from 'react-window';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 const COLUMNS_DESKTOP = 20;
 const COLUMNS_MOBILE = 8;
@@ -41,8 +41,9 @@ function Cell({ columnIndex, rowIndex, style, columns, numbers, selected, toggle
   );
 }
 
-export default function NumberGrid({ numbers, selected, toggle }) {
+const NumberGrid = forwardRef(function NumberGrid({ numbers, selected, toggle }, ref) {
   const containerRef = useRef(null);
+  const gridRef = useGridRef(null);
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
@@ -59,10 +60,22 @@ export default function NumberGrid({ numbers, selected, toggle }) {
   const rows = Math.ceil(10000 / columns);
   const gridHeight = Math.min(rows * cellSize, 640) || 640;
 
+  // Permite que el padre (Home.jsx) le pida "salta al número X"
+  // desde los botones de rango, sin exponer toda la Grid interna.
+  useImperativeHandle(ref, () => ({
+    scrollToNumber(numStr) {
+      const idx = Number(numStr);
+      if (Number.isNaN(idx) || !gridRef.current) return;
+      const rowIndex = Math.floor(idx / columns);
+      gridRef.current.scrollToRow({ index: rowIndex, align: 'start', behavior: 'smooth' });
+    }
+  }), [columns, gridRef]);
+
   return (
     <div ref={containerRef} className="w-full">
       {width > 0 && (
         <Grid
+          gridRef={gridRef}
           cellComponent={Cell}
           cellProps={{ columns, numbers, selected, toggle }}
           columnCount={columns}
@@ -74,4 +87,6 @@ export default function NumberGrid({ numbers, selected, toggle }) {
       )}
     </div>
   );
-}
+});
+
+export default NumberGrid;

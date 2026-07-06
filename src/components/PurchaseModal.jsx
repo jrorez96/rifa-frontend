@@ -19,7 +19,13 @@ function buildWhatsappMessage({ name, email, numbers, total }) {
   ].join('\n');
 }
 
-export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp, onClose, onExpired }) {
+function formatCRPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(-8); // últimos 8 dígitos (sin código de país)
+  if (digits.length !== 8) return phone || '';
+  return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+}
+
+export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp, sinpePhone, onClose, onExpired }) {
   // form -> pedimos datos y creamos la orden
   // proof -> pedimos el comprobante (aún no se abre WhatsApp)
   // sent -> ya se subió el comprobante y se abrió WhatsApp
@@ -158,9 +164,22 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
         {step === 'proof' && order && (
           <>
             <h2 className="font-display text-2xl text-gold-gradient mb-2">Sube tu comprobante SINPE</h2>
+            <p className="text-sm text-[var(--color-ink-muted)] mb-3">
+              Tus números quedaron apartados. Realiza el SINPE Móvil al número:
+            </p>
+
+            <div className="bg-[var(--color-void)] border border-[var(--color-gold)] rounded-md p-3 text-center mb-3">
+              <p className="font-display text-3xl text-[var(--color-gold-bright)] tracking-wide leading-none">
+                {formatCRPhone(sinpePhone)}
+              </p>
+              <p className="text-xs text-[var(--color-ink-muted)] mt-1">
+                En el detalle / motivo del SINPE, escribe <span className="text-[var(--color-gold-bright)] font-semibold">únicamente tu nombre</span> (sin números ni montos).
+              </p>
+            </div>
+
             <p className="text-sm text-[var(--color-ink-muted)] mb-4">
-              Tus números quedaron apartados. Sube la captura del SINPE Móvil para continuar —
-              en cuanto la subas se abrirá WhatsApp con tu pedido listo para enviar.
+              Después sube aquí la captura del comprobante — en cuanto la subas se abrirá WhatsApp
+              con tu pedido listo para enviar.
             </p>
 
             <div className="text-center mb-4">

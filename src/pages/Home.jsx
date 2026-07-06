@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import HeroBanner from '../components/HeroBanner';
 import NumberGrid from '../components/NumberGrid';
 import GridLegend from '../components/GridLegend';
+import RangeButtons from '../components/RangeButtons';
 import SelectedBar from '../components/SelectedBar';
 import PurchaseModal from '../components/PurchaseModal';
 import { getNumbers, getSettings } from '../api/api';
@@ -14,6 +15,7 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const gridRef = useRef(null);
 
   useEffect(() => {
     async function load() {
@@ -72,10 +74,15 @@ export default function Home() {
     e.preventDefault();
     const clean = search.padStart(4, '0').slice(-4);
     if (!/^\d{4}$/.test(clean)) return;
+    gridRef.current?.scrollToNumber(clean);
     if (numbers[clean] === 'available') {
       toggle(clean);
     }
     setSearch('');
+  }
+
+  function handleRangeJump(startIndex) {
+    gridRef.current?.scrollToNumber(String(startIndex).padStart(4, '0'));
   }
 
   return (
@@ -105,6 +112,8 @@ export default function Home() {
           </form>
         </div>
 
+        <RangeButtons onJump={handleRangeJump} />
+
         <div className="mb-4">
           <GridLegend />
         </div>
@@ -112,7 +121,7 @@ export default function Home() {
         {loading ? (
           <p className="text-center text-[var(--color-ink-muted)] py-20">Cargando números…</p>
         ) : (
-          <NumberGrid numbers={numbers} selected={selected} toggle={toggle} />
+          <NumberGrid ref={gridRef} numbers={numbers} selected={selected} toggle={toggle} />
         )}
       </main>
 
@@ -128,6 +137,7 @@ export default function Home() {
           selected={selected}
           pricePerNumber={settings?.price_per_number ?? 1000}
           adminWhatsapp={settings?.admin_whatsapp ?? ''}
+          sinpePhone={settings?.admin_whatsapp ?? ''}
           onClose={() => setModalOpen(false)}
           onExpired={() => {
             setSelected(new Set());
