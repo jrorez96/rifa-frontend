@@ -36,6 +36,7 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [order, setOrder] = useState(null);
+  const [orderNumbers, setOrderNumbers] = useState([]); // captura fija, no cambia si el socket vacía "selected"
   const [proofFile, setProofFile] = useState(null);
 
   const numbers = [...selected];
@@ -48,6 +49,7 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
     try {
       const data = await createOrder({ ...form, numbers });
       setOrder(data);
+      setOrderNumbers(numbers);
       setStep('proof');
     } catch (err) {
       if (err.response?.status === 409) {
@@ -71,7 +73,7 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
     try {
       await uploadProof(order.orderId, proofFile);
 
-      const message = buildWhatsappMessage({ name: form.name, email: form.email, numbers, total: order.total });
+      const message = buildWhatsappMessage({ name: form.name, email: form.email, numbers: orderNumbers, total: order.total });
       const url = `https://wa.me/${adminWhatsapp}?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
 
