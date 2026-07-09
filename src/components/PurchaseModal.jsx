@@ -27,8 +27,8 @@ function formatCRPhone(phone) {
 
 export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp, sinpePhone, onClose, onExpired }) {
   // form -> pedimos datos y creamos la orden
-  // proof -> pedimos el comprobante (aún no se abre WhatsApp)
-  // sent -> ya se subió el comprobante y se abrió WhatsApp
+  // proof -> pedimos el comprobante (sin presión de tiempo visible)
+  // sent -> ya se subió el comprobante y se abrió WhatsApp (corre el hold total de 24h)
   const [step, setStep] = useState('form');
   const [form, setForm] = useState({ name: '', phone: '', email: '' });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -37,6 +37,8 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
   const [error, setError] = useState(null);
   const [order, setOrder] = useState(null);
   const [orderNumbers, setOrderNumbers] = useState([]); // captura fija, no cambia si el socket vacía "selected"
+  const [orderCreatedAt, setOrderCreatedAt] = useState(null);
+  const [sentCountdownSeconds, setSentCountdownSeconds] = useState(null);
   const [proofFile, setProofFile] = useState(null);
 
   const numbers = [...selected];
@@ -50,6 +52,7 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
       const data = await createOrder({ ...form, numbers });
       setOrder(data);
       setOrderNumbers(numbers);
+      setOrderCreatedAt(Date.now());
       setStep('proof');
     } catch (err) {
       if (err.response?.status === 409) {
@@ -75,7 +78,19 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
 
       const message = buildWhatsappMessage({ name: form.name, email: form.email, numbers: orderNumbers, total: order.total });
       const url = `https://wa.me/${adminWhatsapp}?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
+
+      // En iPhone/Safari, window.open() después de un await se bloquea
+      // porque el navegador ya no lo considera parte del mismo gesto del
+      // usuario (popup blocker). Navegar con location.href sí funciona,
+      // tanto en iOS como Android y escritorio.
+      window.location.href = url;
+
+      // Un solo hold total de 24h desde que se creó la orden. Calculamos
+      // cuánto queda de verdad (restando lo que tardó en subir el comprobante)
+      // para mostrarle al cliente cuánto tiempo tiene el admin para validar.
+      const elapsedSeconds = Math.floor((Date.now() - orderCreatedAt) / 1000);
+      const remaining = Math.max(30, order.holdExpiresInSeconds - elapsedSeconds);
+      setSentCountdownSeconds(remaining);
 
       setStep('sent');
     } catch {
@@ -184,11 +199,6 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
               con tu pedido listo para enviar.
             </p>
 
-            <div className="text-center mb-4">
-              <p className="text-xs text-[var(--color-ink-muted)] mb-1">Tiempo restante de tu reserva</p>
-              <CountdownTimer seconds={order.holdExpiresInSeconds} onExpire={onExpired} />
-            </div>
-
             <div className="space-y-3">
               <input
                 type="file"
@@ -213,7 +223,7 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
               onClick={onClose}
               className="mt-5 w-full py-2.5 rounded-md border border-[var(--color-available-border)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
             >
-              Cerrar (tus números siguen apartados hasta que expire el tiempo)
+              Cerrar
             </button>
           </>
         )}
@@ -228,7 +238,7 @@ export default function PurchaseModal({ selected, pricePerNumber, adminWhatsapp,
 
             <div className="text-center mb-4">
               <p className="text-xs text-[var(--color-ink-muted)] mb-1">Tiempo restante mientras se confirma</p>
-              <CountdownTimer seconds={order.holdExpiresInSeconds} onExpire={onExpired} />
+              <CountdownTimer seconds={sentCountdownSeconds ?? order.holdExpiresInSeconds} onExpire={onExpired} />
             </div>
 
             <button

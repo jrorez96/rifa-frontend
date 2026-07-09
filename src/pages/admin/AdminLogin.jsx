@@ -18,8 +18,14 @@ export default function AdminLogin() {
       localStorage.setItem('adminToken', data.token);
       localStorage.setItem('adminUser', data.admin.username);
       navigate('/admin');
-    } catch {
-      setError('Usuario o contraseña incorrectos');
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setError('Usuario o contraseña incorrectos');
+      } else if (err.response) {
+        setError(`Error del servidor (${err.response.status}). Intenta de nuevo.`);
+      } else {
+        setError('No se pudo contactar al servidor. Revisa tu conexión o inténtalo más tarde.');
+      }
     } finally {
       setLoading(false);
     }

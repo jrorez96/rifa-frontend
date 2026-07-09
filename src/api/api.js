@@ -23,9 +23,11 @@ export const getOrder = (id) => api.get(`/orders/${id}`).then(r => r.data);
 export const uploadProof = (orderId, file) => {
   const formData = new FormData();
   formData.append('proof', file);
-  return api.post(`/orders/${orderId}/proof`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }).then(r => r.data);
+  // OJO: no fijar manualmente 'Content-Type': 'multipart/form-data' aquí.
+  // Sin el "boundary" que el navegador agrega automáticamente, el servidor
+  // (multer) no puede separar los campos del archivo y req.file llega vacío
+  // — por eso el comprobante se guardaba como NULL sin ningún error visible.
+  return api.post(`/orders/${orderId}/proof`, formData).then(r => r.data);
 };
 
 // --- Endpoints de admin ---
